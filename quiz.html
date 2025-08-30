@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>小5｜割合・速さ・図形 問題バンク（最小UI）</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif; margin: 0; background: #f7f7fb; color: #222; }
+    header { padding: 14px 20px; background: #111827; color: #fff; display:flex; align-items:center; gap: 12px; }
+    header h1 { font-size: 18px; margin: 0; font-weight: 700; }
+    main { max-width: 900px; margin: 20px auto; padding: 16px; }
+    .card { background: #fff; border-radius: 14px; box-shadow: 0 10px 18px rgba(0,0,0,.06); padding: 20px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .controls { display:flex; gap: 10px; flex-wrap: wrap; margin: 12px 0 4px; }
+    select, button, input[type="number"], input[type="text"] {
+      padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 14px; background: #fff;
+    }
+    button { cursor: pointer; border: none; background: #111827; color: #fff; transition: transform .02s ease; }
+    button:active { transform: translateY(1px); }
+    .ghost { background: #e5e7eb; color: #111; border: 1px solid #d1d5db; }
+    .prompt { font-size: 18px; line-height: 1.6; margin: 8px 0 14px; }
+    .qid { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; color: #6b7280; font-size: 12px; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    @media (min-width:720px){ .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .inputline { display:flex; gap: 8px; align-items: center; }
+    .badge { display:inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; }
+    .result { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: #f1f5f9; font-size: 14px; }
+    .ok { color: #065f46; background: #ecfdf5; border: 1px solid #a7f3d0; }
+    .ng { color: #7f1d1d; background: #fef2f2; border: 1px solid #fecaca; }
+    .muted { color:#6b7280; font-size: 12px; }
+    .stat { font-size: 13px; color:#111; }
+    .footer { margin-top: 20px; color:#6b7280; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>小5｜割合・速さ・図形 問題バンク（最小UI）</h1>
+    <span class="badge" id="badgeCount"></span>
+  </header>
+  <main>
+    <div class="card">
+      <div class="controls">
+        <label>
+          分野：
+          <select id="filterDomain">
+            <option value="ALL">すべて</option>
+            <option value="割合">割合</option>
+            <option value="速さ">速さ</option>
+            <option value="図形">図形</option>
+          </select>
+        </label>
+        <label>
+          出題順：
+          <select id="orderMode">
+            <option value="fixed">番号順</option>
+            <option value="shuffle">ランダム</option>
+          </select>
+        </label>
+        <button id="btnPrev" class="ghost">前へ</button>
+        <button id="btnNext">次へ</button>
+        <button id="btnRandom" class="ghost">ランダム</button>
+        <button id="btnReset" class="ghost">リセット</button>
+      </div>
+
+      <div id="qmeta" class="muted"></div>
+      <div id="prompt" class="prompt"></div>
+
+      <div id="inputs" class="grid"></div>
+
+      <div class="controls">
+        <button id="btnCheck">答え合わせ</button>
+        <button id="btnShow" class="ghost">答えを表示</button>
+      </div>
+
+      <div id="result" class="result" hidden></div>
+
+      <div class="row" style="justify-content: space-between; margin-top:12px;">
+        <div class="stat">正解：<span id="okCount">0</span>／挑戦：<span id="tryCount">0</span></div>
+        <div class="muted">ローカル保存：<span id="saveStatus">—</span></div>
+      </div>
+
+      <div class="footer">※入力は数字のみ。必要な単位は問題文（または各欄のラベル）を確認してね。</div>
+    </div>
+  </main>
+
+  <!-- 問題データ（JSON） -->
+  <script id="data" type="application/json">{
+    "version": 1,
+    "items": [
+      {"id":"R-01","domain":"割合","prompt":"200の25%はいくつですか。","labels":["答え"],"units":[""],"answers":[50],"explain":"200×0.25=50"},
+      {"id":"R-02","domain":"割合","prompt":"360gのうち20%は何gですか。","labels":["g"],"units":["g"],"answers":[72],"explain":"360×0.20=72"},
+      {"id":"R-03","domain":"割合","prompt":"480人の30%は何人ですか。","labels":["人"],"units":["人"],"answers":[144],"explain":"480×0.30=144"},
+      {"id":"R-04","domain":"割合","prompt":"400円の品物を25%引きで買いました。支払う金額はいくらですか。","labels":["円"],"units":["円"],"answers":[300],"explain":"400×(1-0.25)=300"},
+      {"id":"R-05","domain":"割合","prompt":"600mのうち40%は何mですか。","labels":["m"],"units":["m"],"answers":[240],"explain":"600×0.40=240"},
+      {"id":"R-06","domain":"割合","prompt":"450円は500円の何%ですか。","labels":["%"],"units":["%"],"answers":[90],"explain":"450÷500=0.9→90%"},
+      {"id":"R-07","domain":"割合","prompt":"40人のクラスで女子が18人います。女子は全体の何%ですか。","labels":["%"],"units":["%"],"answers":[45],"explain":"18÷40=0.45→45%"},
+      {"id":"R-08","domain":"割合","prompt":"ジュース800mLのうち15%を飲みました。残りは何mLですか。","labels":["mL"],"units":["mL"],"answers":[680],"explain":"800×0.15=120→800-120=680"},
+      {"id":"R-09","domain":"割合","prompt":"1,200円の3割引の値引き額と、支払額を求めなさい。","labels":["値引き(円)","支払(円)"],"units":["円","円"],"answers":[360,840],"explain":"値引き=1200×0.3=360、支払=1200-360=840"},
+      {"id":"R-10","domain":"割合","prompt":"30%増しにした値段が260円でした。元の値段はいくらですか。","labels":["円"],"units":["円"],"answers":[200],"explain":"元×1.3=260→元=200"},
+      {"id":"R-11","domain":"割合","prompt":"500gの2割を足しました。全部で何gになりますか。","labels":["g"],"units":["g"],"answers":[600],"explain":"500×0.2=100→500+100=600"},
+      {"id":"R-12","domain":"割合","prompt":"720円を20%値上げしました。新しい値段はいくらですか。","labels":["円"],"units":["円"],"answers":[864],"explain":"720×1.2=864"},
+      {"id":"R-13","domain":"割合","prompt":"ある数の40%が28です。元の数はいくつですか。","labels":["数"],"units":[""],"answers":[70],"explain":"元×0.4=28→元=70"},
+      {"id":"R-14","domain":"割合","prompt":"消費税10%で税込1,100円でした。税抜きの値段と税額はいくらですか。","labels":["税抜(円)","税(円)"],"units":["円","円"],"answers":[1000,100],"explain":"税抜×1.1=1100→税抜1000、税100"},
+      {"id":"R-15","domain":"割合","prompt":"3,000円をAさん40%、Bさん35%、Cさんは残りでもらいます。Cさんはいくらもらいますか。","labels":["円"],"units":["円"],"answers":[750],"explain":"残り25%→3000×0.25=750"},
+      {"id":"R-16","domain":"割合","prompt":"1,000円の品を『20%引きの後、さらに10%引き』で買いました。支払額はいくらですか。","labels":["円"],"units":["円"],"answers":[720],"explain":"1000×0.8×0.9=720"},
+      {"id":"R-17","domain":"割合","prompt":"赤玉と白玉の比が2:3で、合計50個あります。赤玉は何個ですか。また赤玉は全体の何%ですか。","labels":["赤玉(個)","割合(%)"],"units":["個","%"],"answers":[20,40],"explain":"合計比5→50×2/5=20、割合=40%"},
+      {"id":"S-01","domain":"速さ","prompt":"600mを10分で歩きました。分速は何mですか。","labels":["m/分"],"units":["m/分"],"answers":[60],"explain":"600÷10=60m/分"},
+      {"id":"S-02","domain":"速さ","prompt":"1.5kmを分速100mで歩くと、何分かかりますか。","labels":["分"],"units":["分"],"answers":[15],"explain":"1.5km=1500m→1500÷100=15分"},
+      {"id":"S-03","domain":"速さ","prompt":"時速8kmで45分進むと、何km進みますか。","labels":["km"],"units":["km"],"answers":[6],"explain":"45分=0.75時間→8×0.75=6km"},
+      {"id":"S-04","domain":"速さ","prompt":"300mを分速60mで進むと、何分かかりますか。","labels":["分"],"units":["分"],"answers":[5],"explain":"300÷60=5分"},
+      {"id":"S-05","domain":"速さ","prompt":"AからBまで12kmの道のりを、時速4kmで歩くと何時間かかりますか。","labels":["時間"],"units":["時間"],"answers":[3],"explain":"12÷4=3時間"},
+      {"id":"S-06","domain":"速さ","prompt":"時速9kmは、分速何mにあたりますか。","labels":["m/分"],"units":["m/分"],"answers":[150],"explain":"9km/h=9000m/h→9000÷60=150m/分"},
+      {"id":"S-07","domain":"速さ","prompt":"分速80mは、時速何kmですか。","labels":["km/h"],"units":["km/h"],"answers":[4.8],"explain":"80×60=4800m/h=4.8km/h"},
+      {"id":"S-08","domain":"速さ","prompt":"1.8kmの道のりを分速120mで進むと、何分かかりますか。","labels":["分"],"units":["分"],"answers":[15],"explain":"1.8km=1800m→1800÷120=15分"},
+      {"id":"S-09","domain":"速さ","prompt":"自転車で時速15km、30分走りました。何km進みましたか。","labels":["km"],"units":["km"],"answers":[7.5],"explain":"30分=0.5時間→15×0.5=7.5km"},
+      {"id":"S-10","domain":"速さ","prompt":"家から学校まで1.2kmです。分速80mで歩くと、何分かかりますか。","labels":["分"],"units":["分"],"answers":[15],"explain":"1200÷80=15分"},
+      {"id":"S-11","domain":"速さ","prompt":"学校まで900mを12分で歩きました。分速は何mですか。","labels":["m/分"],"units":["m/分"],"answers":[75],"explain":"900÷12=75m/分"},
+      {"id":"S-12","domain":"速さ","prompt":"6kmの道のりを時速4kmで歩き、途中で10分休みました。出発から到着まで合計何分ですか。","labels":["分"],"units":["分"],"answers":[100],"explain":"6÷4=1.5h=90分→+休み10分=100分"},
+      {"id":"S-13","domain":"速さ","prompt":"2,500mを分速125mで進むと、何分かかりますか。","labels":["分"],"units":["分"],"answers":[20],"explain":"2500÷125=20分"},
+      {"id":"S-14","domain":"速さ","prompt":"時速6kmで1時間20分歩くと、何km進みますか。","labels":["km"],"units":["km"],"answers":[8],"explain":"1時間20分=4/3h→6×4/3=8km"},
+      {"id":"S-15","domain":"速さ","prompt":"2.4kmを分速80mで歩くと、何分かかりますか。","labels":["分"],"units":["分"],"answers":[30],"explain":"2400÷80=30分"},
+      {"id":"S-16","domain":"速さ","prompt":"片道2kmの道を行きは時速5km、帰りは時速4kmで歩きました。往復の合計時間は何分ですか。","labels":["分"],"units":["分"],"answers":[54],"explain":"行き2/5h=0.4h=24分、帰り2/4h=0.5h=30分→合計54分"},
+      {"id":"S-17","domain":"速さ","prompt":"バスが時速40kmで2時間30分走りました。何km進みましたか。","labels":["km"],"units":["km"],"answers":[100],"explain":"2.5h×40=100km"},
+      {"id":"G-01","domain":"図形","prompt":"たて8cm、よこ12cmの長方形の面積と周の長さを求めなさい。","labels":["面積(cm²)","周(cm)"],"units":["cm²","cm"],"answers":[96,40],"explain":"面積8×12=96、周2×(8+12)=40"},
+      {"id":"G-02","domain":"図形","prompt":"一辺9cmの正方形の面積と周の長さを求めなさい。","labels":["面積(cm²)","周(cm)"],"units":["cm²","cm"],"answers":[81,36],"explain":"面積9×9=81、周4×9=36"},
+      {"id":"G-03","domain":"図形","prompt":"底辺10cm、高さ6cmの平行四辺形の面積を求めなさい。","labels":["面積(cm²)"],"units":["cm²"],"answers":[60],"explain":"10×6=60"},
+      {"id":"G-04","domain":"図形","prompt":"底辺12cm、高さ7cmの三角形の面積を求めなさい。","labels":["面積(cm²)"],"units":["cm²"],"answers":[42],"explain":"12×7÷2=42"},
+      {"id":"G-05","domain":"図形","prompt":"一直線上に隣り合う角が40°とx°です。xを求めなさい。","labels":["x(°)"],"units":["°"],"answers":[140],"explain":"一直線は180°→180-40=140"},
+      {"id":"G-06","domain":"図形","prompt":"たて5cm、よこ3cm、高さ10cmの直方体の体積を求めなさい。","labels":["体積(cm³)"],"units":["cm³"],"answers":[150],"explain":"5×3×10=150"},
+      {"id":"G-07","domain":"図形","prompt":"たて20cm、よこ10cm、高さ10cmの直方体の体積は何Lですか。（1L＝1,000cm³）","labels":["体積(L)"],"units":["L"],"answers":[2],"explain":"20×10×10=2000cm³→2L"},
+      {"id":"G-08","domain":"図形","prompt":"底辺12cm、高さはわからない平行四辺形の面積が96cm²でした。高さは何cmですか。","labels":["高さ(cm)"],"units":["cm"],"answers":[8],"explain":"底辺×高さ=面積→12×?=96→?=8"},
+      {"id":"G-09","domain":"図形","prompt":"底辺12cmの三角形の面積が54cm²のとき、高さは何cmですか。","labels":["高さ(cm)"],"units":["cm"],"answers":[9],"explain":"12×高さ÷2=54→高さ=9"},
+      {"id":"G-10","domain":"図形","prompt":"一辺4cmの立方体の体積と表面積を求めなさい。（表面積は発展）","labels":["体積(cm³)","表面積(cm²)"],"units":["cm³","cm²"],"answers":[64,96],"explain":"体積4³=64、表面積6×4²=96"},
+      {"id":"G-11","domain":"図形","prompt":"直方体の展開図は何枚の面からできていますか。","labels":["枚"],"units":["枚"],"answers":[6],"explain":"面は6枚"},
+      {"id":"G-12","domain":"図形","prompt":"立方体の『辺の数』『頂点の数』『面の数』を答えなさい。","labels":["辺","頂点","面"],"units":["本","個","枚"],"answers":[12,8,6],"explain":"辺12・頂点8・面6"},
+      {"id":"G-13","domain":"図形","prompt":"底面が30cm×20cmの水そうに、水を深さ7cmまで入れました。水の量は何Lですか。","labels":["水量(L)"],"units":["L"],"answers":[4.2],"explain":"30×20×7=4200cm³→4.2L"},
+      {"id":"G-14","domain":"図形","prompt":"上の水そう（底面30cm×20cm）に石を入れたところ、600cm³分の水が増えました。水面は何cm上がりますか。","labels":["上昇(cm)"],"units":["cm"],"answers":[1],"explain":"上昇=体積÷底面積=600÷(30×20)=1cm"},
+      {"id":"G-15","domain":"図形","prompt":"1m²は何cm²ですか。","labels":["cm²"],"units":["cm²"],"answers":[10000],"explain":"1m=100cm→(100)²=10,000cm²"},
+      {"id":"G-16","domain":"図形","prompt":"1m³は何Lですか。","labels":["L"],"units":["L"],"answers":[1000],"explain":"1m³=1000L"}
+    ]
+  }</script>
+
+  <script>
+    const $ = (s, el=document) => el.querySelector(s);
+    const $$ = (s, el=document) => [...el.querySelectorAll(s)];
+
+    const storeKey = 'quiz-v1-state';
+    const raw = document.getElementById('data').textContent;
+    const DB = JSON.parse(raw);
+    const allItems = DB.items;
+
+    const els = {
+      badgeCount: $('#badgeCount'),
+      filterDomain: $('#filterDomain'),
+      orderMode: $('#orderMode'),
+      btnPrev: $('#btnPrev'),
+      btnNext: $('#btnNext'),
+      btnRandom: $('#btnRandom'),
+      btnReset: $('#btnReset'),
+      qmeta: $('#qmeta'),
+      prompt: $('#prompt'),
+      inputs: $('#inputs'),
+      btnCheck: $('#btnCheck'),
+      btnShow: $('#btnShow'),
+      result: $('#result'),
+      okCount: $('#okCount'),
+      tryCount: $('#tryCount'),
+      saveStatus: $('#saveStatus')
+    };
+
+    const state = {
+      order: 'fixed',
+      domain: 'ALL',
+      index: 0,
+      ids: [],
+      ok: 0,
+      tried: 0
+    };
+
+    function save(){
+      localStorage.setItem(storeKey, JSON.stringify(state));
+      els.saveStatus.textContent = '保存済み';
+    }
+    function load(){
+      try{ const s = JSON.parse(localStorage.getItem(storeKey)||'{}'); Object.assign(state, s||{}); }catch(e){}
+    }
+
+    function filtered(){
+      const pool = state.domain==='ALL' ? allItems : allItems.filter(x=>x.domain===state.domain);
+      let arr = pool.map((x,i)=>({i, id:x.id}));
+      if(state.order==='shuffle'){
+        for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+      }
+      return arr.map(o=>o.id);
+    }
+
+    function buildIds(){
+      state.ids = filtered();
+      if(state.index>=state.ids.length) state.index = 0;
+      els.badgeCount.textContent = `${state.ids.length}問`;
+    }
+
+    function fmtUnit(u){ return u?` ${u}`:''; }
+
+    function render(){
+      buildIds();
+      const id = state.ids[state.index];
+      const q = allItems.find(x=>x.id===id);
+      els.qmeta.innerHTML = `<span class="qid">#${q.id}</span>｜<span class="badge">${q.domain}</span>`;
+      els.prompt.textContent = q.prompt;
+      els.inputs.innerHTML = '';
+      q.labels.forEach((label, idx)=>{
+        const line = document.createElement('div');
+        line.className = 'inputline';
+        const lab = document.createElement('label');
+        lab.textContent = `${label}`;
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.placeholder = '数字のみ';
+        inp.inputMode = 'decimal';
+        inp.dataset.idx = idx;
+        inp.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ check(); }});
+        line.appendChild(lab);
+        line.appendChild(inp);
+        els.inputs.appendChild(line);
+      });
+      els.result.hidden = true;
+    }
+
+    function getInputs(){
+      return $$('.inputline input', els.inputs).map(x=>x.value.trim());
+    }
+
+    function equalNum(a,b){
+      const na = Number(String(a).replace(/,/g,''));
+      const nb = Number(String(b).replace(/,/g,''));
+      return Number.isFinite(na) && Math.abs(na-nb) < 1e-9;
+    }
+
+    function check(showAnswer=false){
+      const id = state.ids[state.index];
+      const q = allItems.find(x=>x.id===id);
+      const vals = getInputs();
+      const res = { okEach: [], allOk: true };
+      for(let i=0;i<q.answers.length;i++){
+        const ok = equalNum(vals[i], q.answers[i]);
+        res.okEach.push(ok);
+        if(!ok) res.allOk = false;
+      }
+      els.result.hidden = false;
+      state.tried++;
+      if(res.allOk) state.ok++;
+      els.okCount.textContent = state.ok;
+      els.tryCount.textContent = state.tried;
+      save();
+      if(showAnswer || !res.allOk){
+        const a = q.answers.map((v,i)=> `${q.labels[i]} : ${v}${fmtUnit(q.units[i])}`).join('／');
+        els.result.className = 'result ' + (res.allOk? 'ok':'ng');
+        els.result.textContent = (res.allOk? '正解！ ':'もう少し。 正答→ ') + a + (q.explain? `　（理由：${q.explain}）` : '');
+      }else{
+        els.result.className = 'result ok';
+        els.result.textContent = '正解！よくできました。';
+      }
+    }
+
+    function show(){ check(true); }
+    function prev(){ if(state.index>0){ state.index--; render(); save(); } }
+    function next(){ if(state.index<state.ids.length-1){ state.index++; render(); save(); } }
+    function random(){ state.index = Math.floor(Math.random()*state.ids.length); render(); save(); }
+    function reset(){ state.ok=0; state.tried=0; state.index=0; render(); save(); }
+
+    // events
+    els.filterDomain.addEventListener('change', e=>{ state.domain = e.target.value; state.index=0; render(); save(); });
+    els.orderMode.addEventListener('change', e=>{ state.order = e.target.value; render(); save(); });
+    els.btnPrev.addEventListener('click', prev);
+    els.btnNext.addEventListener('click', next);
+    els.btnRandom.addEventListener('click', random);
+    els.btnReset.addEventListener('click', reset);
+    els.btnCheck.addEventListener('click', ()=>check(false));
+    els.btnShow.addEventListener('click', show);
+
+    // init
+    load();
+    if(!['ALL','割合','速さ','図形'].includes(state.domain)) state.domain='ALL';
+    if(!['fixed','shuffle'].includes(state.order)) state.order='fixed';
+    document.getElementById('filterDomain').value = state.domain;
+    document.getElementById('orderMode').value = state.order;
+    buildIds();
+    render();
+  </script>
+</body>
+</html>
